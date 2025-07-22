@@ -549,21 +549,23 @@ function step11_dialogue(){
     }
 
     function showSpeech(targetWrap, text, side){
-      // side: 'left' or 'right' relative to the bubble arrow
-      // We reuse .speech CSS, but position within the char wrap
-      const bubble = el('div', {
-        className: 'speech ' + side + ' fade-in',
-        textContent: text,
-        style: `
-          opacity:0;
-          animation-duration: 350ms;
-        `
-      });
-      targetWrap.appendChild(bubble);
-      // small async to ensure style apply then set opacity
-      requestAnimationFrame(()=> bubble.style.opacity = 1);
-      return bubble;
-    }
+  const bubble = el('div', {
+    className: 'speech fade-in',
+    textContent: text,
+    style: `
+      opacity:0;
+      position:absolute;
+      top:0;
+      ${side === 'right' ? 'left:100%; margin-left:12px;' : 'right:100%; margin-right:12px;'}
+      max-width:240px;
+      animation-duration:350ms;
+    `
+  });
+  targetWrap.appendChild(bubble);
+  requestAnimationFrame(()=> bubble.style.opacity = 1);
+  return bubble;
+}
+
 
     function showButton(label){
       return new Promise(res=>{
@@ -637,29 +639,30 @@ function step11_dialogue(){
     const mgxSpeech1 = showSpeech(mgx, 'Can we talk?', 'right');
 
     // wait then button
-    await delay(1600);
+    await delay(3000);
     await showButton('Phone a friend.');
+    
 
     // 3. On click: show Buhay (fade-in), his speech, then button
     fadeIn(buhay);
     await delay(1200);
     const buhaySpeech = showSpeech(buhay, 'Hey bro, it’s me, Buhay. Don’t hang out with her tonight. Let’s just watch a film and hold each other. I’ll be in bed early anyways, I’ve got football in the morning.', 'left');
 
-    await delay(1800);
+    await delay(3000);
     await showButton('Talk to Margaux.');
+    mgxSpeech1.remove(); 
 
     // 4. Margaux final line, button to end
     // Remove Buhay speech to keep things clean
-    buhaySpeech.remove();
 
     const mgxSpeech2 = showSpeech(mgx, 'I got you Lululemon pants.', 'right');
 
-    await delay(1800);
+    await delay(300);
     await showButton('Take the pants and leave.');
 
     // Clean up small fade outs then move on
-    mgxSpeech1 && mgxSpeech1.remove();
     mgxSpeech2 && mgxSpeech2.remove();
+    buhaySpeech && buhaySpeech.remove();
     wildText && wildText.remove();
 
     setTimeout(()=> GameState.next(), 300);
