@@ -38,6 +38,8 @@
     button:disabled { opacity: 0.5; cursor: default; transform: none; }
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn var(--transition-med) forwards; opacity: 0; }
+    .fade-out { animation: fadeOut var(--transition-med) forwards; opacity: 1; }
+    @keyframes fadeOut { to { opacity: 0; pointer-events: none; } }
     @keyframes fadeIn { to { opacity: 1; } }
 
     /* =====================
@@ -513,16 +515,18 @@
   // STEP 11 ---------------------------------------------------
 function step11_dialogue(){
   /* STEP 11: shirtless center; mgx slides in right w/ "A wild Margaux appears!"
-     Mgx speaks. After a few seconds, fade in "Phone a friend".
-     On click: Buhay appears (does NOT disappear later) and speaks.
-     After a few seconds, fade in "Talk to Margaux".
-     Margaux speaks pants line, then after a few seconds fade in "Take the pants and leave" button.
-     Then advance.
+     Then Margaux: "can we talk?"
+     Fade in "Phone a friend" button.
+     On click: Buhay fades in (stays) and speaks.
+     Then "Talk to Margaux" button.
+     Margaux pants line, then "Take the pants and leave" -> next step.
   */
+
+  // ---- Scene scaffold ----
   const wrap = el('div', { className:'centered-stack fade-in' });
   const area = el('div', { style:'position:relative; width:100%; max-width:900px; height:400px; margin:auto;' });
 
-  // --- Characters ---
+  // Characters (locked positions)
   const shirtless = el('img', {
     src: Assets.shirtless,
     style:'position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:200px; z-index:1;'
@@ -537,62 +541,76 @@ function step11_dialogue(){
   });
   area.append(shirtless, mgx, buhay);
 
-  // --- Dialogue UI ---
+  // Dialogue UI
   const dialogueBox = el('div', { id:'dialogue-box' });
-  const dText = el('div', { id:'dialogue-text' });
-  const actionBtn = el('button', { className:'hidden' }); // buttons appear later
+  const dText       = el('div', { id:'dialogue-text' });
+  const actionBtn   = el('button', { className:'hidden' });
   dialogueBox.append(dText, actionBtn);
 
-  wrap.append(area, dialogueBox);
+  // Unlock / description banner (like other unlocks)
+  const desc = el('div', {
+    textContent: 'A wild Margaux appears!',
+    className: 'subtitle fade-in',
+    style:'position:absolute; top:8px; left:50%; transform:translateX(-50%); white-space:nowrap;'
+  });
+
+  wrap.append(area, desc, dialogueBox);
   mount(wrap);
 
-  // --- Helpers ---
-  function say(text){
-    dText.textContent = text;
-  }
+  // ---- Helpers ----
+  const wait = ms => new Promise(r=>setTimeout(r, ms));
+
+  function say(text){ dText.textContent = text; }
+
   function showBtn(label, handler){
     actionBtn.textContent = label;
     actionBtn.onclick = handler;
-    actionBtn.classList.add('fade-in');
     actionBtn.classList.remove('hidden');
+    // retrigger fade-in
+    actionBtn.classList.remove('fade-in');
+    void actionBtn.offsetWidth;
+    actionBtn.classList.add('fade-in');
   }
   function hideBtn(){
     actionBtn.classList.add('hidden');
     actionBtn.classList.remove('fade-in');
   }
 
-  // --- Timeline ---
-  // 0) shirtless already centered.
-  // 1) mgx appears right + line "A wild Margaux appears!"
-  setTimeout(()=>{
+  // ---- Timeline (async makes it easy) ----
+  (async function run(){
+    // Slide Margaux in
+    await wait(400);
     mgx.style.opacity = 1;
     mgx.style.right = '10%';
-    say('A wild Margaux appears!');
-    // after her speaking for a few seconds -> show Phone a friend
-    setTimeout(()=> showBtn('Phone a friend', phoneAFriend), 2500);
-  }, 400);
+
+    // Keep banner for a moment, then remove & start dialogue
+    await wait(1200);
+    desc.remove();
+
+    // Margaux first line
+    say('can we talk?');
+
+    // After a few seconds, show Phone a friend
+    await wait(2500);
+    showBtn('Phone a friend', phoneAFriend);
+  })();
 
   function phoneAFriend(){
     hideBtn();
-    // Buhay fades in and talks
     buhay.style.opacity = 1;
     say("Hey bro, it's me, Buhay. Don't hang out with her tonight. Let's just watch a film and hold each other. I'll be in bed early anyways, I've got football in the morning.");
-    // after a few seconds -> show Talk to Margaux
     setTimeout(()=> showBtn('Talk to Margaux', talkToMargaux), 3000);
   }
 
   function talkToMargaux(){
     hideBtn();
-    // IMPORTANT: Buhay stays (no opacity change)
     say('I got you Lululemon pants.');
-    // after a few seconds -> show Take the pants and leave
     setTimeout(()=> showBtn('Take the pants and leave', finishStep), 2500);
   }
 
   function finishStep(){
     GameState.next();
   }
-
     btn.onclick = ()=>{
       idx++;
       if(idx >= steps.length){ GameState.next(); }
@@ -667,25 +685,61 @@ function step11_dialogue(){
   }
 
   // STEP 14 ---------------------------------------------------
-  function step14_birthdayCountdown(){
-    /* TODO STEP 14: Keep scramble, retire ivy, show tux with message and countdown to July 26 2025 14:00 UTC */
-    Retired.add('ivy');
-    const msgWrap = el('div', { className:'centered-stack fade-in', style:'position:absolute; right:2%; top:2%; max-width:360px;'});
-    const tuxImg = el('img',{ src: Assets.tux, style:'max-width:100%;' });
-    const text = el('div',{ className:'subtitle', textContent:'Birthday Bop Unlocked!<br>Love, Tristan Burke Bashar and Thomas' });
-    const cd = el('div',{ id:'countdown' });
-    msgWrap.append(tuxImg, text, cd);
-    qs('#scene-root').appendChild(msgWrap); // do not clear scramble
+function step14_birthdayCountdown(){
+  /* Fade the scramble away, center + fullscreen the Birthday Bop */
+  Retired.add('ivy');
 
-    const target = new Date(Date.UTC(2025,6,26,14,0,0));
-    startCountdown(target, diff=>{
-      const sec = Math.floor(diff/1000);
-      const h = Math.floor(sec/3600);
-      const m = Math.floor((sec%3600)/60);
-      const s = sec%60;
-      cd.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-    });
-  }
+  const root = qs('#scene-root');
+
+  // grab everything currently in the scene (the scramble UI) **before** adding the new wrap
+  const toFade = [...root.children];
+
+  // fade them out, then remove
+  toFade.forEach(n => n.classList.add('fade-out'));
+  setTimeout(()=> toFade.forEach(n => n.remove()), 300); // matches --transition-med
+
+  // full-screen centered wrapper for Birthday Bop
+  const msgWrap = el('div', {
+    className: 'absolute-fill fade-in',
+    style: `
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      gap:1rem;
+      padding:1rem;
+    `
+  });
+
+  const tuxImg = el('img', {
+    src: Assets.tux,
+    style: 'max-height:80vh; width:auto;'
+  });
+
+  const text = el('div', {
+    className: 'title',
+    innerHTML: 'Birthday Bop Unlocked!<br><span style="font-size:1.1rem; color:var(--muted);">Love, Tristan Burke Bashar and Thomas</span>'
+  });
+
+  const cd = el('div', {
+    id: 'countdown',
+    style: 'font-size:2rem; font-weight:700; letter-spacing:0.04em;'
+  });
+
+  msgWrap.append(tuxImg, text, cd);
+  root.appendChild(msgWrap);
+
+  const target = new Date(Date.UTC(2025,6,26,14,0,0));
+  startCountdown(target, diff=>{
+    const sec = Math.max(0, Math.floor(diff/1000));
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    cd.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  });
+}
+
 
   /* ==========================================================
      GLOBAL FLOW WIRING (Do NOT modify)
