@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bop24: The Game (Scaffold)</title>
+  <title>Bop 24: The Game</title>
   <style>
     /* =====================
        GLOBAL / RESET
@@ -152,7 +152,7 @@
 </head>
 <body>
   <div id="app">
-    <header>Happy 24th birthday, Big Bop!</header>
+    <header>Happy 24th, Big Bop!</header>
 
     <main id="game-area">
       <!-- Dynamic scene container -->
@@ -264,9 +264,9 @@
 
   // STEP 1 ----------------------------------------------------
   function step1_titleFadeIn(){
-    /* TODO STEP 1: Implement fade-in title "Bop24: The Game" */
+    /* TODO STEP 1: Implement fade-in title "Bop 24: The Game" */
     const wrap = el('div', { className: 'centered-stack fade-in' });
-    const h = el('div', { className: 'title', textContent: 'Bop24: The Game' });
+    const h = el('div', { className: 'title', textContent: 'Bop 24: The Game' });
     wrap.appendChild(h);
     mount(wrap);
     // When finished (after animation or timeout), advance:
