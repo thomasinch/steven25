@@ -512,112 +512,161 @@
   }
 
   // STEP 11 ---------------------------------------------------
-  // STEP 11 ---------------------------------------------------
 function step11_dialogue(){
-  /* STEP 11: shirtless center; mgx slides in right w/ "A wild Margaux appears!"
-     Then Margaux: "can we talk?"
-     Fade in "Phone a friend" button.
-     On click: Buhay fades in (stays) and speaks.
-     Then "Talk to Margaux" button.
-     Margaux pants line, then "Take the pants and leave" -> next step.
-  */
+  // Everything run inside an async IIFE so we can await delays cleanly
+  (async () => {
 
-  // ---- Scene scaffold ----
-  const wrap = el('div', { className:'centered-stack fade-in' });
-  const area = el('div', { style:'position:relative; width:100%; max-width:900px; height:400px; margin:auto;' });
+    /* ------------- Helpers ------------- */
+    const delay = ms => new Promise(r => setTimeout(r, ms));
 
-  // Characters (locked positions)
-  const shirtless = el('img', {
-    src: Assets.shirtless,
-    style:'position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:200px; z-index:1;'
-  });
-  const mgx = el('img', {
-    src: Assets.mgx,
-    style:'position:absolute; right:-220px; bottom:0; width:180px; z-index:2; opacity:0; transition:all 400ms ease;'
-  });
-  const buhay = el('img', {
-    src: Assets.buhay,
-    style:'position:absolute; left:10%; bottom:0; width:180px; z-index:2; opacity:0; transition:opacity 300ms ease;'
-  });
-  area.append(shirtless, mgx, buhay);
+    function makeChar(src, side){
+      // side: 'left' | 'center' | 'right'
+      const wrap = el('div', {
+        className: 'char-wrap',
+        style: `
+          position:relative;
+          opacity:0;
+          transition: opacity 300ms ease;
+          display:flex;
+          justify-content:center;
+        `
+      });
+      const img = el('img', {
+        src,
+        style: `
+          max-height:240px;
+          width:auto;
+        `
+      });
+      wrap.appendChild(img);
+      wrap.dataset.side = side;
+      return wrap;
+    }
 
-  // Dialogue UI
-  const dialogueBox = el('div', { id:'dialogue-box' });
-  const dText       = el('div', { id:'dialogue-text' });
-  const actionBtn   = el('button', { className:'hidden' });
-  dialogueBox.append(dText, actionBtn);
+    function fadeIn(node){
+      node.classList.add('fade-in');
+      node.style.opacity = 1;
+    }
 
-  // Unlock / description banner (like other unlocks)
-  const desc = el('div', {
-    textContent: 'A wild Margaux appears!',
-    className: 'subtitle fade-in',
-    style:'position:absolute; top:8px; left:50%; transform:translateX(-50%); white-space:nowrap;'
-  });
+    function showSpeech(targetWrap, text, side){
+      // side: 'left' or 'right' relative to the bubble arrow
+      // We reuse .speech CSS, but position within the char wrap
+      const bubble = el('div', {
+        className: 'speech ' + side + ' fade-in',
+        textContent: text,
+        style: `
+          opacity:0;
+          animation-duration: 350ms;
+        `
+      });
+      targetWrap.appendChild(bubble);
+      // small async to ensure style apply then set opacity
+      requestAnimationFrame(()=> bubble.style.opacity = 1);
+      return bubble;
+    }
 
-  wrap.append(area, desc, dialogueBox);
-  mount(wrap);
+    function showButton(label){
+      return new Promise(res=>{
+        const btn = el('button', {
+          textContent: label,
+          className: 'fade-in',
+          style: 'opacity:0; margin-top:1rem;'
+        });
+        dialogueBox.appendChild(btn);
+        requestAnimationFrame(()=> btn.style.opacity = 1);
+        btn.onclick = () => {
+          btn.disabled = true;
+          btn.classList.add('fade-out');
+          setTimeout(()=> btn.remove(), 250);
+          res();
+        };
+      });
+    }
 
-  // ---- Helpers ----
-  const wait = ms => new Promise(r=>setTimeout(r, ms));
+    /* ------------- Scene skeleton ------------- */
+    const root = el('div', { className: 'absolute-fill', style:'display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1rem;' });
+    const stage = el('div', {
+      style: `
+        display:flex;
+        align-items:flex-end;
+        justify-content:center;
+        gap:3rem;
+        width:100%;
+        max-width:900px;
+        height:60vh;
+        position:relative;
+      `
+    });
+    const dialogueBox = el('div', {
+      id: 'dialogue-box',
+      className: 'fade-in',
+      style: 'opacity:0;'
+    });
+    mount(root);
+    root.append(stage, dialogueBox);
+    requestAnimationFrame(()=> dialogueBox.style.opacity = 1);
 
-  function say(text){ dText.textContent = text; }
+    // Characters
+    const shirtless = makeChar(Assets.shirtless, 'center');
+    const mgx = makeChar(Assets.mgx, 'right');
+    const buhay = makeChar(Assets.buhay, 'left');
 
-  function showBtn(label, handler){
-    actionBtn.textContent = label;
-    actionBtn.onclick = handler;
-    actionBtn.classList.remove('hidden');
-    // retrigger fade-in
-    actionBtn.classList.remove('fade-in');
-    void actionBtn.offsetWidth;
-    actionBtn.classList.add('fade-in');
-  }
-  function hideBtn(){
-    actionBtn.classList.add('hidden');
-    actionBtn.classList.remove('fade-in');
-  }
+    // Placeholders in stage (keep order left-center-right)
+    stage.append(buhay, shirtless, mgx);
 
-  // ---- Timeline (async makes it easy) ----
-  (async function run(){
-    // Slide Margaux in
-    await wait(400);
-    mgx.style.opacity = 1;
-    mgx.style.right = '10%';
+    /* ------------- Timeline ------------- */
 
-    // Keep banner for a moment, then remove & start dialogue
-    await wait(1200);
-    desc.remove();
+    // 1. Show shirtless immediately
+    fadeIn(shirtless);
 
-    // Margaux first line
-    say('can we talk?');
+    // 2. After a short delay, bring in Margaux and the "wild" text
+    await delay(1200);
+    fadeIn(mgx);
 
-    // After a few seconds, show Phone a friend
-    await wait(2500);
-    showBtn('Phone a friend', phoneAFriend);
+    const wildText = el('div', {
+      className: 'subtitle fade-in',
+      textContent: 'A wild Margaux appears!',
+      style: 'opacity:0; text-align:center;'
+    });
+    root.insertBefore(wildText, dialogueBox);
+    requestAnimationFrame(()=> wildText.style.opacity = 1);
+
+    // wait a bit before Margaux talks
+    await delay(1800);
+
+    const mgxSpeech1 = showSpeech(mgx, 'Can we talk?', 'right');
+
+    // wait then button
+    await delay(1600);
+    await showButton('Phone a friend.');
+
+    // 3. On click: show Buhay (fade-in), his speech, then button
+    fadeIn(buhay);
+    await delay(1200);
+    const buhaySpeech = showSpeech(buhay, 'Hey bro, it’s me, Buhay. Don’t hang out with her tonight. Let’s just watch a film and hold each other. I’ll be in bed early anyways, I’ve got football in the morning.', 'left');
+
+    await delay(1800);
+    await showButton('Talk to Margaux.');
+
+    // 4. Margaux final line, button to end
+    // Remove Buhay speech to keep things clean
+    buhaySpeech.remove();
+
+    const mgxSpeech2 = showSpeech(mgx, 'I got you Lululemon pants.', 'right');
+
+    await delay(1800);
+    await showButton('Take the pants and leave.');
+
+    // Clean up small fade outs then move on
+    mgxSpeech1 && mgxSpeech1.remove();
+    mgxSpeech2 && mgxSpeech2.remove();
+    wildText && wildText.remove();
+
+    setTimeout(()=> GameState.next(), 300);
+
   })();
+}
 
-  function phoneAFriend(){
-    hideBtn();
-    buhay.style.opacity = 1;
-    say("Hey bro, it's me, Buhay. Don't hang out with her tonight. Let's just watch a film and hold each other. I'll be in bed early anyways, I've got football in the morning.");
-    setTimeout(()=> showBtn('Talk to Margaux', talkToMargaux), 3000);
-  }
-
-  function talkToMargaux(){
-    hideBtn();
-    say('I got you Lululemon pants.');
-    setTimeout(()=> showBtn('Take the pants and leave', finishStep), 2500);
-  }
-
-  function finishStep(){
-    GameState.next();
-  }
-    btn.onclick = ()=>{
-      idx++;
-      if(idx >= steps.length){ GameState.next(); }
-      else run();
-    };
-    run();
-  }
 
   // STEP 12 ---------------------------------------------------
   function step12_fratUnlocked(){
@@ -767,7 +816,7 @@ function step14_birthdayCountdown(){
   });
 
   // Boot
-  window.addEventListener('load', ()=> GameState.go(1));
+  window.addEventListener('load', ()=> GameState.go(11));
 
   </script>
 </body>
