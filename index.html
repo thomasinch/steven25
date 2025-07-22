@@ -646,7 +646,7 @@ function step11_dialogue(){
     // 3. On click: show Buhay (fade-in), his speech, then button
     fadeIn(buhay);
     await delay(1200);
-    const buhaySpeech = showSpeech(buhay, 'Hey bro, it’s me, Buhay. Don’t hang out with her tonight. Let’s just watch a film and hold each other. I’ll be in bed early anyways, I’ve got football in the morning.', 'left');
+    const buhaySpeech = showSpeech(buhay, 'Hey bro, it’s me, Buhay. Let’s just watch a film and hold each other tonight. No girls.', 'left');
 
     await delay(3000);
     await showButton('Talk to Margaux.');
@@ -819,7 +819,7 @@ function step14_birthdayCountdown(){
   });
 
   // Boot
-  window.addEventListener('load', ()=> GameState.go(10));
+  window.addEventListener('load', ()=> GameState.go(1));
 
   </script>
 </body>
