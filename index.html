@@ -385,7 +385,7 @@
     wrap.appendChild(img);
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Yips Bop Unlocked!' }));
     mount(wrap);
-    setTimeout(()=>GameState.next(), 1500);
+    setTimeout(()=>GameState.next(), 3500);
   }
 
   // STEP 7 ----------------------------------------------------
@@ -408,7 +408,7 @@
     const timer = el('div', { id:'countdown', style:'position:absolute;bottom:8px;left:50%;transform:translateX(-50%);' });
     wrap.appendChild(timer);
 
-    const endAt = Date.now() + 60*1000;
+    const endAt = Date.now() + 30*1000;
     const cancel = startCountdown(new Date(endAt), diff=>{
       timer.textContent = Math.ceil(diff/1000)+'s';
     }, ()=>{
@@ -430,15 +430,15 @@
     wrap.appendChild(img);
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Murph Bop Unlocked!' }));
     mount(wrap);
-    setTimeout(()=>GameState.next(), 1200);
+    setTimeout(()=>GameState.next(), 3200);
   }
 
   // STEP 9 ----------------------------------------------------
   function step9_pushups(){
-    /* TODO STEP 9: Pushups circle, counter start 10000 -> 0. Up key reduces by N chars inside circle. Show hint at 9900 */
+    /* TODO STEP 9: Pushups circle, counter start 5000 -> 0. Up key reduces by N chars inside circle. Show hint at 9900 */
     const wrap = el('div', { className: 'centered-stack fade-in' });
     const label = el('div', { className:'subtitle', textContent: 'Time for pushups! (Press the up key)' });
-    const counterEl = el('div', { className:'title', textContent: '10000' });
+    const counterEl = el('div', { className:'title', textContent: '5000' });
 
     const circle = el('div', { id:'pushup-circle' });
     const murphImg = el('img', { src: Assets.murph, style:'width:120px;' });
@@ -449,7 +449,7 @@
     wrap.append(label, counterEl, circle, hint);
     mount(wrap);
 
-    let count = 10000;
+    let count = 5000;
     let copies = [];
 
     function makeCopy(key){
@@ -486,7 +486,7 @@
       copies.forEach(cp=>{ if(isInsideCircle(cp)) n++; });
       count = Math.max(0, count - n);
       counterEl.textContent = count;
-      if(count === 9900) hint.classList.remove('hidden');
+      if(count === 4900) hint.classList.remove('hidden');
       if(count === 0){
         window.removeEventListener('keydown', upHandler);
         copies.forEach(cp=>cp.remove());
@@ -506,7 +506,7 @@
     wrap.append(img, text);
     mount(wrap);
     setTimeout(()=>{ text.remove(); img.style.maxHeight='200px'; }, 2000);
-    setTimeout(()=>GameState.next(), 2600);
+    setTimeout(()=>GameState.next(), 3600);
   }
 
   // STEP 11 ---------------------------------------------------
@@ -515,9 +515,10 @@
     const wrap = el('div', { className:'centered-stack fade-in' });
     const area = el('div', { style:'position:relative; width:100%; max-width:900px; height:400px; margin:auto;' });
 
-    const shirtless = el('img', { src: Assets.shirtless, style:'position:absolute; left:40%; bottom:0; width:180px;' });
-    const mgx = el('img', { src: Assets.mgx, style:'position:absolute; right:10%; bottom:0; width:160px;' });
-    area.append(shirtless, mgx);
+    const shirtless = el('img', { src: Assets.shirtless, style:'position:absolute; left:40%; bottom:0; width:180px; z-index:1;' });
+    const mgx = el('img', { src: Assets.mgx, style:'position:absolute; right:10%; bottom:0; width:160px; z-index:1;' });
+    const buhay = el('img', { src: Assets.buhay, style:'position:absolute; left:10%; bottom:0; width:160px; z-index:1; opacity:0;' });
+    area.append(shirtless, mgx, buhay);
 
     const dialogueBox = el('div', { id:'dialogue-box' });
     const dText = el('div', { id:'dialogue-text' });
@@ -528,22 +529,30 @@
     mount(wrap);
 
     const steps = [
-      { speaker:'mgx', text:'Can we talk?', btn:'Phone a friend.', action:()=>{
-          const buhay = el('img', { src: Assets.buhay, style:'position:absolute; left:10%; bottom:0; width:160px;' });
-          area.appendChild(buhay);
-        }
-      },
-      { speaker:'buhay', text:"Hey bro, it's me, Buhay. Don't hang out with her tonight. Let's just watch a film and hold each other. I'll be in bed early anyways, I've got football in the morning.", btn:'Talk to Margaux.', action:()=>{} },
-      { speaker:'mgx', text:'I got you Lululemon pants.', btn:'Take the pants and then leave.', action:()=>{} }
+      { speaker:'mgx',   text:'Can we talk?',                                                                 btn:'Phone a friend.' },
+      { speaker:'buhay', text:"Hey bro, it's me, Buhay. Don't hang out with her tonight. Let's just watch a film and hold each other. I'll be in bed early anyways, I've got football in the morning.", btn:'Talk to Margaux.' },
+      { speaker:'mgx',   text:'I got you Lululemon pants.',                                                    btn:'Take the pants and then leave.' }
     ];
 
     let idx = 0;
     function run(){
       const s = steps[idx];
+      
+      // dim all
+      [mgx, buhay, shirtless].forEach(img => img.style.opacity = 0.3);
+
+      // show / hide Buhay
+      buhay.style.opacity = (s.speaker === 'buhay') ? 1 : 0;
+      
+      // highlight current speaker
+      if(s.speaker === 'mgx') mgx.style.opacity = 1;
+      if(s.speaker === 'shirtless') shirtless.style.opacity = 1;
+      if(s.speaker === 'buhay') buhay.style.opacity = 1;
+      
       dText.textContent = s.text;
       btn.textContent = s.btn;
-      s.action && s.action();
     }
+
     btn.onclick = ()=>{
       idx++;
       if(idx >= steps.length){ GameState.next(); }
@@ -561,7 +570,7 @@
     wrap.appendChild(img);
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Frat Bop Unlocked!' }));
     mount(wrap);
-    setTimeout(()=>GameState.next(), 1200);
+    setTimeout(()=>GameState.next(), 3200);
   }
 
   // STEP 13 ---------------------------------------------------
@@ -611,9 +620,10 @@
     mount(wrap);
 
     function checkSolved(){
-      const built = qsa('.scramble-slot', slots).map(s=>s.textContent||' ').join('');
-      if(built === target){ GameState.next(); }
+      const built = qsa('.scramble-slot', slots).map(s=>s.textContent||'').join('');
+      if (built === lettersOnly.join('')) GameState.next();
     }
+
   }
 
   // STEP 14 ---------------------------------------------------
