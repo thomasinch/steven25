@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bop24: The Game (Scaffold)</title>
+  <style>
+    /* =====================
+       GLOBAL / RESET
+       ===================== */
+    :root {
+      --bg: #0f0f14;
+      --fg: #f5f5f5;
+      --accent: #ff3e7f;
+      --accent-2: #35d0ff;
+      --accent-3: #ffe14d;
+      --muted: #767676;
+      --success: #3adb76;
+      --warn: #ffcc00;
+      --error: #ff5f56;
+      --font-main: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-med: 300ms ease;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      background: var(--bg); color: var(--fg);
+      font-family: var(--font-main);
+    }
+    img { max-width: 100%; display: block; }
+    button {
+      cursor: pointer; border: none; padding: 0.6rem 1rem; border-radius: 8px;
+      background: var(--accent); color: #fff; font-weight: 600; font-size: 1rem;
+      transition: background var(--transition-fast), transform var(--transition-fast);
+    }
+    button:hover { background: #ff5b93; transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: default; transform: none; }
+    .hidden { display: none !important; }
+    .fade-in { animation: fadeIn var(--transition-med) forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* =====================
+       LAYOUT CONTAINERS
+       ===================== */
+    #app {
+      height: 100vh; width: 100vw;
+      display: grid; grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+    header, footer {
+      padding: 0.5rem 1rem; background: rgba(255,255,255,0.03); backdrop-filter: blur(6px);
+      font-size: 0.9rem; color: var(--muted);
+    }
+    #game-area {
+      position: relative; overflow: hidden;
+      display: flex; justify-content: center; align-items: center;
+    }
+    #retired-row {
+      display: flex; gap: 0.5rem; padding: 0.5rem; overflow-x: auto;
+      min-height: 80px; align-items: center;
+      background: rgba(255,255,255,0.05);
+    }
+    .retired-char {
+      height: 60px; width: auto; flex: 0 0 auto; filter: grayscale(0.2);
+    }
+
+    /* =====================
+       GENERIC UI COMPONENTS
+       ===================== */
+    .centered-stack {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+      text-align: center; padding: 1rem;
+    }
+    .title {
+      font-size: clamp(2rem, 6vw, 4rem); font-weight: 800; color: var(--accent-2);
+      text-shadow: 0 0 15px rgba(53,208,255,0.4);
+    }
+    .subtitle { font-size: 1.2rem; color: var(--muted); }
+    .label { font-size: 0.85rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+    .input {
+      padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08); color: var(--fg);
+      width: 220px; font-size: 1rem;
+    }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .char-card {
+      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+      padding: 0.8rem; border-radius: 12px; background: rgba(255,255,255,0.06);
+      box-shadow: 0 0 0 2px transparent; transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    }
+    .char-card:hover { box-shadow: 0 0 0 2px var(--accent-2); transform: translateY(-2px); }
+    .char-card img { height: 160px; width: auto; }
+    .char-name { font-size: 0.9rem; color: var(--muted); }
+
+    /* Wordle like grid */
+    #wordle-grid { display: flex; gap: 0.5rem; }
+    .wordle-cell {
+      width: 60px; height: 60px; border: 2px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;
+      text-transform: uppercase; border-radius: 8px; background: rgba(255,255,255,0.06);
+    }
+    .state-correct { background: var(--success) !important; color: #000; border-color: var(--success); }
+    .state-present { background: var(--warn) !important; color: #000; border-color: var(--warn); }
+    .state-absent { background: var(--muted) !important; color: #000; border-color: var(--muted); }
+
+    /* Drag & drop letter scramble */
+    #scramble-letters, #scramble-slots {
+      display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; margin: 0.5rem 0 1rem;
+    }
+    .scramble-letter {
+      width: 42px; height: 42px; border-radius: 8px; background: rgba(255,255,255,0.12);
+      display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1.2rem;
+      user-select: none; cursor: grab;
+    }
+    .scramble-slot {
+      width: 42px; height: 42px; border-radius: 8px; border: 2px dashed rgba(255,255,255,0.2);
+      display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1.1rem; color: var(--muted);
+    }
+
+    /* Circle area (pushups) */
+    #pushup-circle {
+      width: 320px; height: 320px; border-radius: 50%; border: 4px solid var(--accent-2);
+      margin: 1rem auto; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04);
+    }
+    .draggable-copy { position: absolute; width: 80px; height: auto; cursor: grab; }
+
+    /* Timer / Countdown */
+    #countdown { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.03em; }
+
+    /* Dialogue UI */
+    #dialogue-box {
+      max-width: 640px; margin: 1rem auto 0; padding: 1rem 1.2rem; border-radius: 12px;
+      background: rgba(255,255,255,0.06); position: relative;
+    }
+    #dialogue-text { margin-bottom: 1rem; line-height: 1.45; }
+    .speech {
+      position: absolute; background: rgba(255,255,255,0.12); padding: 0.6rem 0.8rem; border-radius: 8px;
+      max-width: 240px; font-size: 0.95rem; line-height: 1.3;
+    }
+    .speech.left { left: -10px; top: -10px; }
+    .speech.right { right: -10px; top: -10px; }
+
+    /* Utility */
+    .absolute-fill {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; justify-content: center; align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>Bop24 Scaffold • v0.1</header>
+
+    <main id="game-area">
+      <!-- Dynamic scene container -->
+      <div id="scene-root" class="absolute-fill"></div>
+    </main>
+
+    <footer>
+      Retired Characters:
+      <div id="retired-row"></div>
+    </footer>
+  </div>
+
+  <script>
+  /*************************************************************
+   * Bop24: The Game — Scaffold
+   * -----------------------------------------------------------
+   * Goal: Provide a solid skeleton where each numbered step in
+   * the spec can be implemented in isolation by different devs.
+   *
+   * HOW TO WORK:
+   *  - Each step has a dedicated function hook and TODO block.
+   *  - Use the provided utilities (EventBus, StateMachine, DOM helpers).
+   *  - Only edit inside your step's TODO region. Do not alter global glue.
+   *  - Assets (PNGs) are assumed to be next to index.html.
+   *************************************************************/
+
+  /* ==========================================================
+     UTILITIES & CORE INFRA (Do NOT modify unless you maintain core)
+     ========================================================== */
+  const qs = (sel, el=document) => el.querySelector(sel);
+  const qsa = (sel, el=document) => [...el.querySelectorAll(sel)];
+  const el = (tag, props={}) => Object.assign(document.createElement(tag), props);
+
+  const EventBus = {
+    _map: new Map(),
+    on(type, fn) { if(!this._map.has(type)) this._map.set(type, []); this._map.get(type).push(fn); },
+    off(type, fn) { if(!this._map.has(type)) return; this._map.set(type, this._map.get(type).filter(f=>f!==fn)); },
+    emit(type, data) { (this._map.get(type)||[]).forEach(fn=>fn(data)); }
+  };
+
+  class StateMachine {
+    constructor() { this.step = 0; }
+    go(to){ this.step = to; EventBus.emit('state:change', to); }
+    next(){ this.go(this.step + 1); }
+  }
+
+  const GameState = new StateMachine();
+
+  const Assets = {
+    // Characters & images referenced by steps
+    highschool: 'highschool.png',
+    base: 'base.png',
+    yips: 'yips.png',
+    murph: 'murph.png',
+    shirtless: 'shirtless.png',
+    mgx: 'mgx.png',
+    buhay: 'buhay.png',
+    ivy: 'ivy.png',
+    tux: 'tux.png'
+  };
+
+  const Retired = {
+    list: [],
+    add(name){ this.list.push(name); renderRetiredRow(); }
+  };
+
+  function renderRetiredRow(){
+    const row = qs('#retired-row');
+    row.innerHTML = '';
+    Retired.list.forEach(key => {
+      const img = el('img', { src: Assets[key], className: 'retired-char' });
+      row.appendChild(img);
+    });
+  }
+
+  function clearScene(){ qs('#scene-root').innerHTML=''; }
+  function mount(node){ clearScene(); qs('#scene-root').appendChild(node); }
+
+  /* Countdown util */
+  function startCountdown(targetDate, onTick, onEnd){
+    let iv = setInterval(()=>{
+      const now = new Date();
+      const diff = targetDate - now;
+      if(diff <= 0){ clearInterval(iv); onTick(0); onEnd && onEnd(); return; }
+      onTick(diff);
+    }, 1000);
+    return ()=>clearInterval(iv);
+  }
+
+  /* Simple drag util for pushups & scramble letters */
+  function makeDraggable(elm){
+    let offsetX=0, offsetY=0, dragging=false;
+    elm.addEventListener('pointerdown', e=>{
+      dragging=true; elm.setPointerCapture(e.pointerId);
+      const rect = elm.getBoundingClientRect();
+      offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
+    });
+    elm.addEventListener('pointermove', e=>{
+      if(!dragging) return;
+      elm.style.left = (e.clientX - offsetX) + 'px';
+      elm.style.top = (e.clientY - offsetY) + 'px';
+    });
+    elm.addEventListener('pointerup', ()=> dragging=false);
+  }
+
+  /* ==========================================================
+     STEP HANDLERS — Each dev owns one function. Keep it isolated.
+     ========================================================== */
+
+  // STEP 1 ----------------------------------------------------
+  function step1_titleFadeIn(){
+    /* TODO STEP 1: Implement fade-in title "Bop24: The Game" */
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const h = el('div', { className: 'title', textContent: 'Bop24: The Game' });
+    wrap.appendChild(h);
+    mount(wrap);
+    // When finished (after animation or timeout), advance:
+    setTimeout(()=>GameState.next(), 1200);
+  }
+
+  // STEP 2 ----------------------------------------------------
+  function step2_nameDateGate(){
+    /* TODO STEP 2: Input form for date + name (case-insensitive).
+       Only proceed if date === 'july 22' and name === 'steven'. */
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Enter your info' }));
+
+    const dateInput = el('input', { className: 'input', placeholder: 'Date (e.g. July 22)' });
+    const nameInput = el('input', { className: 'input', placeholder: 'Name' });
+    const btn = el('button', { textContent: 'Submit' });
+
+    btn.onclick = () => {
+      const d = dateInput.value.trim().toLowerCase();
+      const n = nameInput.value.trim().toLowerCase();
+      if(d === 'july 22' && n === 'steven'){
+        GameState.next();
+      } else {
+        // Stay. No action.
+      }
+    };
+
+    wrap.append(dateInput, nameInput, btn);
+    mount(wrap);
+  }
+
+  // STEP 3 ----------------------------------------------------
+  function step3_chooseCharacter(){
+    /* TODO STEP 3: Show two character cards (highschool, base) with labels.
+       Clicking selects one. Emit EventBus.emit('char:selected', key) */
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const txt = el('div', { className: 'subtitle', textContent: 'Choose your character.' });
+    const row = el('div', { className: 'row' });
+
+    [['highschool','Premature Bop'], ['base','Nipsey Hussle Shorts Bop']].forEach(([key,label])=>{
+      const card = el('div', { className: 'char-card' });
+      card.appendChild(el('img', { src: Assets[key] }));
+      card.appendChild(el('div', { className: 'char-name', textContent: label }));
+      card.onclick = ()=>{
+        EventBus.emit('char:selected', key);
+        GameState.next();
+      };
+      row.appendChild(card);
+    });
+    wrap.append(txt, row);
+    mount(wrap);
+  }
+
+  // STEP 4 ----------------------------------------------------
+  function step4_manageSelectedChar(){
+    /* TODO STEP 4: Move unselected to retired row, selected to side.
+       Remove text from Step 2 (already gone). */
+    // We'll keep selectedChar in global.
+    const wrap = el('div', { className: 'absolute-fill' });
+    // Selected character shown side-left for now
+    const img = el('img', { src: Assets[selectedChar], style: 'position:absolute; left:2%; bottom:2%; width:140px;' });
+    wrap.appendChild(img);
+    mount(wrap);
+    // Add unselected to retired
+    const other = selectedChar === 'highschool' ? 'base' : 'highschool';
+    Retired.add(other);
+    // proceed
+    GameState.next();
+  }
+
+  // STEP 5 ----------------------------------------------------
+  function step5_wordle(){
+    /* TODO STEP 5: 4-letter Wordle (answer = YIPS). Unlimited tries. */
+    const ANSWER = 'YIPS';
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Solve the Wordle Puzzle' }));
+
+    const grid = el('div', { id: 'wordle-grid' });
+    const cells = Array.from({length:4}, ()=> el('div',{className:'wordle-cell','data-letter':''}));
+    cells.forEach(c=>grid.appendChild(c));
+
+    let current = ['', '', '', ''];
+    function renderCells(){ cells.forEach((c,i)=> c.textContent = current[i] || ''); }
+
+    const input = el('input', { className: 'input', maxlength: 4, placeholder: 'Type 4 letters', style: 'text-transform:uppercase;' });
+    input.addEventListener('input', ()=>{ current = input.value.toUpperCase().split('').slice(0,4); renderCells(); });
+
+    const checkBtn = el('button', { textContent: 'Check' });
+    checkBtn.onclick = ()=>{
+      if(current.length<4) return;
+      const guess = current.join('');
+      cells.forEach((c,i)=>{
+        c.classList.remove('state-correct','state-present','state-absent');
+        const g = guess[i];
+        if(ANSWER[i]===g) c.classList.add('state-correct');
+        else if(ANSWER.includes(g)) c.classList.add('state-present');
+        else c.classList.add('state-absent');
+      });
+      if(guess === ANSWER){
+        const ok = el('div',{textContent:'Correct', style:'font-size:1.4rem;color:var(--success);font-weight:700;'});
+        wrap.appendChild(ok);
+        setTimeout(()=>GameState.next(), 800);
+      }
+    };
+
+    wrap.append(grid, input, checkBtn);
+    mount(wrap);
+  }
+
+  // STEP 6 ----------------------------------------------------
+  function step6_yipsUnlocked(){
+    /* TODO STEP 6: Remove wordle, add selectedChar to retired, show yips full */
+    Retired.add(selectedChar);
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const img = el('img', { src: Assets.yips, style: 'max-height:70vh;' });
+    wrap.appendChild(img);
+    wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Yips Bop Unlocked!' }));
+    mount(wrap);
+    setTimeout(()=>GameState.next(), 1500);
+  }
+
+  // STEP 7 ----------------------------------------------------
+  function step7_moveNoGirls(){
+    /* TODO STEP 7: Shrink yips, hide text, arrow key movement blank screen, 1 min timer */
+    const wrap = el('div', { className: 'absolute-fill' });
+    const info = el('div', { className: 'label', textContent: 'Use the arrow keys to walk around without talking to any girls.' , style:'position:absolute;top:8px;left:50%;transform:translateX(-50%);'});
+    wrap.appendChild(info);
+
+    const avatar = el('img', { src: Assets.yips, style:'position:absolute; width:110px; left:50%; top:50%; transform:translate(-50%,-50%);' });
+    wrap.appendChild(avatar);
+
+    let x=window.innerWidth/2, y=window.innerHeight/2;
+    function move(dx,dy){ x+=dx; y+=dy; avatar.style.left=x+'px'; avatar.style.top=y+'px'; }
+    const keys = {ArrowUp:[0,-10],ArrowDown:[0,10],ArrowLeft:[-10,0],ArrowRight:[10,0]};
+    function keyHandler(e){ if(keys[e.key]){ const [dx,dy]=keys[e.key]; move(dx,dy); }}
+
+    window.addEventListener('keydown', keyHandler);
+
+    const timer = el('div', { id:'countdown', style:'position:absolute;bottom:8px;left:50%;transform:translateX(-50%);' });
+    wrap.appendChild(timer);
+
+    const endAt = Date.now() + 60*1000;
+    const cancel = startCountdown(new Date(endAt), diff=>{
+      timer.textContent = Math.ceil(diff/1000)+'s';
+    }, ()=>{
+      window.removeEventListener('keydown', keyHandler);
+      const done = el('div',{textContent:'You did it!', className:'subtitle', style:'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'});
+      wrap.appendChild(done);
+      setTimeout(()=>GameState.next(), 1000);
+    });
+
+    mount(wrap);
+  }
+
+  // STEP 8 ----------------------------------------------------
+  function step8_murphUnlocked(){
+    /* TODO STEP 8: retire yips, show Murph full */
+    Retired.add('yips');
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const img = el('img', { src: Assets.murph, style: 'max-height:70vh;' });
+    wrap.appendChild(img);
+    wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Murph Bop Unlocked!' }));
+    mount(wrap);
+    setTimeout(()=>GameState.next(), 1200);
+  }
+
+  // STEP 9 ----------------------------------------------------
+  function step9_pushups(){
+    /* TODO STEP 9: Pushups circle, counter start 10000 -> 0. Up key reduces by N chars inside circle. Show hint at 9900 */
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const label = el('div', { className:'subtitle', textContent: 'Time for pushups! (Press the up key)' });
+    const counterEl = el('div', { className:'title', textContent: '10000' });
+
+    const circle = el('div', { id:'pushup-circle' });
+    const murphImg = el('img', { src: Assets.murph, style:'width:120px;' });
+    circle.appendChild(murphImg);
+
+    const hint = el('div', { className:'label hidden', textContent:'(Drag characters from the bottom of the screen into the circle to do pushups with you)' });
+
+    wrap.append(label, counterEl, circle, hint);
+    mount(wrap);
+
+    let count = 10000;
+    let copies = [];
+
+    function makeCopy(key){
+      const cp = el('img', { src: Assets[key], className:'draggable-copy' });
+      cp.style.left = (window.innerWidth/2 - 40) + 'px';
+      cp.style.top = (window.innerHeight/2 - 40) + 'px';
+      makeDraggable(cp);
+      document.body.appendChild(cp);
+      copies.push(cp);
+    }
+
+    // Drag from retired row: copy on pointerdown
+    qs('#retired-row').addEventListener('pointerdown', e=>{
+      const img = e.target.closest('img');
+      if(!img) return;
+      const key = Object.keys(Assets).find(k=>Assets[k]===img.getAttribute('src'));
+      makeCopy(key);
+    });
+
+    function isInsideCircle(elm){
+      const r = circle.getBoundingClientRect();
+      const b = elm.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const ex = b.left + b.width/2, ey = b.top + b.height/2;
+      const dist = Math.hypot(cx-ex, cy-ey);
+      return dist < r.width/2;
+    }
+
+    function upHandler(e){
+      if(e.key !== 'ArrowUp') return;
+      if(count <= 0) return;
+      // how many inside circle?
+      let n = 1; // murph base
+      copies.forEach(cp=>{ if(isInsideCircle(cp)) n++; });
+      count = Math.max(0, count - n);
+      counterEl.textContent = count;
+      if(count === 9900) hint.classList.remove('hidden');
+      if(count === 0){
+        window.removeEventListener('keydown', upHandler);
+        copies.forEach(cp=>cp.remove());
+        setTimeout(()=>GameState.next(), 600);
+      }
+    }
+    window.addEventListener('keydown', upHandler);
+  }
+
+  // STEP 10 ---------------------------------------------------
+  function step10_bedtimeUnlocked(){
+    /* TODO STEP 10: Clear gameplay, show shirtless full, then shrink. Add murph to retired. */
+    Retired.add('murph');
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const img = el('img', { src: Assets.shirtless, style: 'max-height:70vh;' });
+    const text = el('div', { className:'subtitle', textContent:'Bedtime Bop Unlocked!' });
+    wrap.append(img, text);
+    mount(wrap);
+    setTimeout(()=>{ text.remove(); img.style.maxHeight='200px'; }, 2000);
+    setTimeout(()=>GameState.next(), 2600);
+  }
+
+  // STEP 11 ---------------------------------------------------
+  function step11_dialogue(){
+    /* TODO STEP 11: Dialogue tree with mgx, buhay, buttons. Only one path as described. */
+    const wrap = el('div', { className:'centered-stack fade-in' });
+    const area = el('div', { style:'position:relative; width:100%; max-width:900px; height:400px; margin:auto;' });
+
+    const shirtless = el('img', { src: Assets.shirtless, style:'position:absolute; left:40%; bottom:0; width:180px;' });
+    const mgx = el('img', { src: Assets.mgx, style:'position:absolute; right:10%; bottom:0; width:160px;' });
+    area.append(shirtless, mgx);
+
+    const dialogueBox = el('div', { id:'dialogue-box' });
+    const dText = el('div', { id:'dialogue-text' });
+    const btn = el('button');
+    dialogueBox.append(dText, btn);
+
+    wrap.append(area, dialogueBox);
+    mount(wrap);
+
+    const steps = [
+      { speaker:'mgx', text:'Can we talk?', btn:'Phone a friend.', action:()=>{
+          const buhay = el('img', { src: Assets.buhay, style:'position:absolute; left:10%; bottom:0; width:160px;' });
+          area.appendChild(buhay);
+        }
+      },
+      { speaker:'buhay', text:"Hey bro, it's me, Buhay. Don't hang out with her tonight. Let's just watch a film and hold each other. I'll be in bed early anyways, I've got football in the morning.", btn:'Talk to Margaux.', action:()=>{} },
+      { speaker:'mgx', text:'I got you Lululemon pants.', btn:'Take the pants and then leave.', action:()=>{} }
+    ];
+
+    let idx = 0;
+    function run(){
+      const s = steps[idx];
+      dText.textContent = s.text;
+      btn.textContent = s.btn;
+      s.action && s.action();
+    }
+    btn.onclick = ()=>{
+      idx++;
+      if(idx >= steps.length){ GameState.next(); }
+      else run();
+    };
+    run();
+  }
+
+  // STEP 12 ---------------------------------------------------
+  function step12_fratUnlocked(){
+    /* TODO STEP 12: Fade previous. Add shirtless to retired. Show ivy full. Move mgx/buhay/shirtless to retired */
+    Retired.add('shirtless'); Retired.add('mgx'); Retired.add('buhay');
+    const wrap = el('div', { className: 'centered-stack fade-in' });
+    const img = el('img', { src: Assets.ivy, style: 'max-height:70vh;' });
+    wrap.appendChild(img);
+    wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Frat Bop Unlocked!' }));
+    mount(wrap);
+    setTimeout(()=>GameState.next(), 1200);
+  }
+
+  // STEP 13 ---------------------------------------------------
+  function step13_scramble(){
+    /* TODO STEP 13: Letter scramble to form "A DAY ALL ABOUT STEVEN" */
+    const target = 'A DAY ALL ABOUT STEVEN';
+    const lettersOnly = target.replace(/\s/g,'').split('');
+
+    const wrap = el('div', { className:'centered-stack fade-in' });
+    const topRow = el('div',{id:'scramble-letters'});
+    const slots = el('div',{id:'scramble-slots'});
+
+    // Create top letters randomized
+    const pool = lettersOnly.slice().sort(()=>Math.random()-0.5);
+    pool.forEach(ch=>{
+      const l = el('div',{className:'scramble-letter', textContent:ch});
+      l.draggable = true;
+      l.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', ch); e.dataTransfer.effectAllowed='copy'; l.classList.add('dragging'); });
+      l.addEventListener('dragend', ()=> l.classList.remove('dragging'));
+      topRow.appendChild(l);
+    });
+
+    // Make slots (including spaces)
+    target.split('').forEach(ch=>{
+      if(ch===' ') {
+        const spacer = el('div',{style:'width:16px'}); slots.appendChild(spacer); return;
+      }
+      const s = el('div',{className:'scramble-slot', 'data-expected':ch});
+      s.addEventListener('dragover', e=>{ e.preventDefault(); });
+      s.addEventListener('drop', e=>{
+        const got = e.dataTransfer.getData('text/plain');
+        if(!got) return;
+        if(s.textContent) return; // already filled
+        s.textContent = got;
+        // remove one from top (first occurrence)
+        const first = qsa('.scramble-letter', topRow).find(l=>l.textContent===got);
+        if(first) first.remove();
+        checkSolved();
+      });
+      slots.appendChild(s);
+    });
+
+    const resetBtn = el('button',{textContent:'Reset'});
+    resetBtn.onclick = ()=>{ GameState.go(13); }; // reload step 13
+
+    wrap.append(topRow, slots, resetBtn);
+    mount(wrap);
+
+    function checkSolved(){
+      const built = qsa('.scramble-slot', slots).map(s=>s.textContent||' ').join('');
+      if(built === target){ GameState.next(); }
+    }
+  }
+
+  // STEP 14 ---------------------------------------------------
+  function step14_birthdayCountdown(){
+    /* TODO STEP 14: Keep scramble, retire ivy, show tux with message and countdown to July 26 2025 14:00 UTC */
+    Retired.add('ivy');
+    const msgWrap = el('div', { className:'centered-stack fade-in', style:'position:absolute; right:2%; top:2%; max-width:360px;'});
+    const tuxImg = el('img',{ src: Assets.tux, style:'max-width:100%;' });
+    const text = el('div',{ className:'subtitle', textContent:'Birthday Bop Unlocked! See you Saturday. Love, Tristan Burke Bashar and Thomas' });
+    const cd = el('div',{ id:'countdown' });
+    msgWrap.append(tuxImg, text, cd);
+    qs('#scene-root').appendChild(msgWrap); // do not clear scramble
+
+    const target = new Date(Date.UTC(2025,6,26,14,0,0));
+    startCountdown(target, diff=>{
+      const sec = Math.floor(diff/1000);
+      const h = Math.floor(sec/3600);
+      const m = Math.floor((sec%3600)/60);
+      const s = sec%60;
+      cd.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    });
+  }
+
+  /* ==========================================================
+     GLOBAL FLOW WIRING (Do NOT modify)
+     ========================================================== */
+  let selectedChar = null;
+  EventBus.on('char:selected', key=> selectedChar = key );
+
+  EventBus.on('state:change', step => {
+    switch(step){
+      case 1: step1_titleFadeIn(); break;
+      case 2: step2_nameDateGate(); break;
+      case 3: step3_chooseCharacter(); break;
+      case 4: step4_manageSelectedChar(); break;
+      case 5: step5_wordle(); break;
+      case 6: step6_yipsUnlocked(); break;
+      case 7: step7_moveNoGirls(); break;
+      case 8: step8_murphUnlocked(); break;
+      case 9: step9_pushups(); break;
+      case 10: step10_bedtimeUnlocked(); break;
+      case 11: step11_dialogue(); break;
+      case 12: step12_fratUnlocked(); break;
+      case 13: step13_scramble(); break;
+      case 14: step14_birthdayCountdown(); break;
+    }
+  });
+
+  // Boot
+  window.addEventListener('load', ()=> GameState.go(1));
+
+  </script>
+</body>
+</html>
