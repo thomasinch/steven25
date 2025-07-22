@@ -281,13 +281,13 @@
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Enter the correct information to begin.' }));
 
     const dateInput = el('input', { className: 'input', placeholder: 'Date (e.g. July 22)' });
-    const nameInput = el('input', { className: 'input', placeholder: 'Name' });
+    const nameInput = el('input', { className: 'input', placeholder: 'Full Government Name' });
     const btn = el('button', { textContent: 'Submit' });
 
     btn.onclick = () => {
       const d = dateInput.value.trim().toLowerCase();
       const n = nameInput.value.trim().toLowerCase();
-      if(d === 'july 22' && n === 'steven'){
+      if(d === 'july 22' && n === 'steven jack freidenrich'){
         GameState.next();
       } else {
         // Stay. No action.
