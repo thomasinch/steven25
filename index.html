@@ -58,11 +58,11 @@
     }
     #retired-row {
       display: flex; gap: 0.5rem; padding: 0.5rem; overflow-x: auto;
-      min-height: 80px; align-items: center;
+      min-height: 160px; align-items: center;
       background: rgba(255,255,255,0.05);
     }
     .retired-char {
-      height: 60px; width: auto; flex: 0 0 auto; filter: grayscale(0.2);
+      height: 120px; width: auto; flex: 0 0 auto; filter: grayscale(0.2);
     }
 
     /* =====================
@@ -152,7 +152,7 @@
 </head>
 <body>
   <div id="app">
-    <header>Bop24 Scaffold • v0.1</header>
+    <header>Happy 24th birthday, Big Bop!</header>
 
     <main id="game-area">
       <!-- Dynamic scene container -->
@@ -160,7 +160,7 @@
     </main>
 
     <footer>
-      Retired Characters:
+      Unlocked Character:
       <div id="retired-row"></div>
     </footer>
   </div>
@@ -270,7 +270,7 @@
     wrap.appendChild(h);
     mount(wrap);
     // When finished (after animation or timeout), advance:
-    setTimeout(()=>GameState.next(), 1200);
+    setTimeout(()=>GameState.next(), 5000);
   }
 
   // STEP 2 ----------------------------------------------------
@@ -368,7 +368,7 @@
       if(guess === ANSWER){
         const ok = el('div',{textContent:'Correct', style:'font-size:1.4rem;color:var(--success);font-weight:700;'});
         wrap.appendChild(ok);
-        setTimeout(()=>GameState.next(), 800);
+        setTimeout(()=>GameState.next(), 5000);
       }
     };
 
@@ -385,7 +385,7 @@
     wrap.appendChild(img);
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Yips Bop Unlocked!' }));
     mount(wrap);
-    setTimeout(()=>GameState.next(), 3500);
+    setTimeout(()=>GameState.next(), 5000);
   }
 
   // STEP 7 ----------------------------------------------------
@@ -415,7 +415,7 @@
       window.removeEventListener('keydown', keyHandler);
       const done = el('div',{textContent:'You did it!', className:'subtitle', style:'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'});
       wrap.appendChild(done);
-      setTimeout(()=>GameState.next(), 1000);
+      setTimeout(()=>GameState.next(), 5000);
     });
 
     mount(wrap);
@@ -430,7 +430,7 @@
     wrap.appendChild(img);
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Murph Bop Unlocked!' }));
     mount(wrap);
-    setTimeout(()=>GameState.next(), 3200);
+    setTimeout(()=>GameState.next(), 5000);
   }
 
   // STEP 9 ----------------------------------------------------
@@ -490,7 +490,7 @@
       if(count === 0){
         window.removeEventListener('keydown', upHandler);
         copies.forEach(cp=>cp.remove());
-        setTimeout(()=>GameState.next(), 600);
+        setTimeout(()=>GameState.next(), 5000);
       }
     }
     window.addEventListener('keydown', upHandler);
@@ -505,8 +505,8 @@
     const text = el('div', { className:'subtitle', textContent:'Bedtime Bop Unlocked!' });
     wrap.append(img, text);
     mount(wrap);
-    setTimeout(()=>{ text.remove(); img.style.maxHeight='200px'; }, 2000);
-    setTimeout(()=>GameState.next(), 3600);
+    setTimeout(()=>{ text.remove(); img.style.maxHeight='200px'; }, 5000);
+    setTimeout(()=>GameState.next(), 5000);
   }
 
   // STEP 11 ---------------------------------------------------
@@ -570,7 +570,7 @@
     wrap.appendChild(img);
     wrap.appendChild(el('div', { className: 'subtitle', textContent: 'Frat Bop Unlocked!' }));
     mount(wrap);
-    setTimeout(()=>GameState.next(), 3200);
+    setTimeout(()=>GameState.next(), 5000);
   }
 
   // STEP 13 ---------------------------------------------------
