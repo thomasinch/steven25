@@ -557,7 +557,7 @@ function step11_dialogue(){
       position:absolute;
       top:0;
       ${side === 'right' ? 'left:100%; margin-left:12px;' : 'right:100%; margin-right:12px;'}
-      max-width:400px;
+      max-width: clamp(300px, 35vw, 520px);
       animation-duration:350ms;
     `
   });
