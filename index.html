@@ -670,7 +670,7 @@ function step11_dialogue(){
   function step14_birthdayCountdown(){
     /* TODO STEP 14: Keep scramble, retire ivy, show tux with message and countdown to July 26 2025 14:00 UTC */
     Retired.add('ivy');
-    const msgWrap = el('div', { className:'centered-stack fade-in', style:'position:absolute; right:50%; top:50%; max-width:360px;'});
+    const msgWrap = el('div', { className:'centered-stack fade-in', style:'position:absolute; right:2%; top:2%; max-width:360px;'});
     const tuxImg = el('img',{ src: Assets.tux, style:'max-width:100%;' });
     const text = el('div',{ className:'subtitle', textContent:'Birthday Bop Unlocked!<br>Love, Tristan Burke Bashar and Thomas' });
     const cd = el('div',{ id:'countdown' });
