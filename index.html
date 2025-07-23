@@ -437,7 +437,7 @@
 
   // STEP 9 ----------------------------------------------------
   function step9_pushups(){
-    /* TODO STEP 9: Pushups circle, counter start 5000 -> 0. Up key reduces by N chars inside circle. Show hint at 9900 */
+    /* TODO STEP 9: Pushups circle, counter start 5000 -> 0. Up key reduces by N chars inside circle. Show hint at 4900 */
     const wrap = el('div', { className: 'centered-stack fade-in' });
     const label = el('div', { className:'subtitle', textContent: 'Time for pushups! (Press the up key)' });
     const counterEl = el('div', { className:'title', textContent: '5000' });
@@ -446,7 +446,7 @@
     const murphImg = el('img', { src: Assets.murph, style:'width:120px;' });
     circle.appendChild(murphImg);
 
-    const hint = el('div', { className:'label hidden', textContent:'(Drag characters from the bottom of the screen into the circle to do pushups with you)' });
+    const hint = el('div', { className:'label hidden', textContent:'(Click characters from the bottom of the screen to do pushups with you)' });
 
     wrap.append(label, counterEl, circle, hint);
     mount(wrap);
@@ -715,6 +715,7 @@ function step11_dialogue(){
         if(!got) return;
         if(s.textContent) return; // already filled
         s.textContent = got;
+        if (got === s.dataset.expected) s.style.color = 'green';
         // remove one from top (first occurrence)
         const first = qsa('.scramble-letter', topRow).find(l=>l.textContent===got);
         if(first) first.remove();
@@ -726,6 +727,7 @@ function step11_dialogue(){
     const resetBtn = el('button',{textContent:'Reset'});
     resetBtn.onclick = ()=>{ GameState.go(13); }; // reload step 13
 
+    wrap.prepend(el('p',{textContent:'Drag and drop letters.'}));
     wrap.append(topRow, slots, resetBtn);
     mount(wrap);
 
