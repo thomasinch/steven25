@@ -715,7 +715,7 @@ function step11_dialogue(){
         if(!got) return;
         if(s.textContent) return; // already filled
         s.textContent = got;
-        if (got === s.dataset.expected) s.style.color = 'green';
+        if (got === s.getAttribute('data-expected')) s.style.setProperty('color','green','important');
         // remove one from top (first occurrence)
         const first = qsa('.scramble-letter', topRow).find(l=>l.textContent===got);
         if(first) first.remove();
@@ -821,7 +821,7 @@ function step14_birthdayCountdown(){
   });
 
   // Boot
-  window.addEventListener('load', ()=> GameState.go(1));
+  window.addEventListener('load', ()=> GameState.go(12));
 
   </script>
 </body>
