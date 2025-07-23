@@ -120,24 +120,6 @@
       width: 42px; height: 42px; border-radius: 8px; border: 2px dashed rgba(255,255,255,0.2);
       display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1.1rem; color: var(--muted);
     }
-    /* checkmark when slot is correct */
-    .scramble-slot{ position:relative; }
-    
-    .scramble-slot[data-correct="true"]::after{
-      content:"✓";
-      position:absolute;
-      right:-10px;
-      top:-10px;
-      width:20px; height:20px;
-      border-radius:50%;
-      background: var(--success);
-      color:#000;
-      font-size:1rem;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none;
-    }
-
-
     /* Circle area (pushups) */
     #pushup-circle {
       width: 320px; height: 320px; border-radius: 50%; border: 4px solid var(--accent-2);
@@ -733,9 +715,6 @@ function step11_dialogue(){
         if(!got) return;
         if(s.textContent) return; // already filled
         s.textContent = got;
-        if (got.toUpperCase() === s.dataset.expected) {
-          s.setAttribute('data-correct','true');
-        }
         // remove one from top (first occurrence)
         const first = qsa('.scramble-letter', topRow).find(l=>l.textContent===got);
         if(first) first.remove();
@@ -752,9 +731,29 @@ function step11_dialogue(){
     mount(wrap);
 
     function checkSolved(){
-      const built = qsa('.scramble-slot', slots).map(s=>s.textContent||'').join('');
-      if (built === lettersOnly.join('')) GameState.next();
-    }
+  const built = qsa('.scramble-slot', slots).map(s=>s.textContent||'').join('');
+
+  // === NEW: draw checkmarks for correctly placed letters ===
+  qsa('.scramble-slot', slots).forEach(s => {
+    const right = s.textContent && s.textContent === s.dataset.expected;
+    s.style.position = 'relative';                       // ensure we can absolutely position inside
+    let mark = s.querySelector('.cm');                   // existing mark?
+    if (right){
+      if (!mark){
+        mark = el('div', {
+          className: 'cm',
+          textContent: '✓',
+          style: 'position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:0.9rem;color:var(--success);pointer-events:none;'
+        });
+        s.appendChild(mark);
+      }
+    } else if (mark){ mark.remove(); }
+  });
+  // =========================================================
+
+  if (built === lettersOnly.join('')) GameState.next();
+}
+
 
   }
 
