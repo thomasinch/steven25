@@ -1,3 +1,5 @@
+in step 13, when somebody puts in a correct letter, i want it to get a little checkmark next to it. build this as its own completely separate thing. dont just try to pop it into the code with css or js. i keep trying to do that and it does not work. what do i do. give me a few lines to add to that function that will fix this. it should add to checksolved, because that is run everytime. all letters that are in their correct place when you hit checksolved should get a little checkmark below them
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -731,29 +733,9 @@ function step11_dialogue(){
     mount(wrap);
 
     function checkSolved(){
-  const built = qsa('.scramble-slot', slots).map(s=>s.textContent||'').join('');
-
-  // === NEW: draw checkmarks for correctly placed letters ===
-  qsa('.scramble-slot', slots).forEach(s => {
-    const right = s.textContent && s.textContent === s.dataset.expected;
-    s.style.position = 'relative';                       // ensure we can absolutely position inside
-    let mark = s.querySelector('.cm');                   // existing mark?
-    if (right){
-      if (!mark){
-        mark = el('div', {
-          className: 'cm',
-          textContent: '✓',
-          style: 'position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:0.9rem;color:var(--success);pointer-events:none;'
-        });
-        s.appendChild(mark);
-      }
-    } else if (mark){ mark.remove(); }
-  });
-  // =========================================================
-
-  if (built === lettersOnly.join('')) GameState.next();
-}
-
+      const built = qsa('.scramble-slot', slots).map(s=>s.textContent||'').join('');
+      if (built === lettersOnly.join('')) GameState.next();
+    }
 
   }
 
@@ -840,7 +822,7 @@ function step14_birthdayCountdown(){
   });
 
   // Boot
-  window.addEventListener('load', ()=> GameState.go(12));
+  window.addEventListener('load', ()=> GameState.go(1));
 
   </script>
 </body>
